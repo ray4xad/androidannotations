@@ -1,21 +1,6 @@
 package org.androidannotations.sample;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
-import org.androidannotations.annotations.Background;
-import org.androidannotations.annotations.Click;
-import org.androidannotations.annotations.EActivity;
-import org.androidannotations.annotations.LongClick;
-import org.androidannotations.annotations.SystemService;
-import org.androidannotations.annotations.Touch;
-import org.androidannotations.annotations.Transactional;
-import org.androidannotations.annotations.UiThread;
-import org.androidannotations.annotations.ViewById;
-import org.androidannotations.annotations.res.BooleanRes;
-import org.androidannotations.annotations.res.ColorRes;
-import org.androidannotations.annotations.res.StringRes;
-
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Notification;
@@ -33,8 +18,38 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.karumi.dexter.Dexter;
+import com.karumi.dexter.MultiplePermissionsReport;
+import com.karumi.dexter.PermissionToken;
+import com.karumi.dexter.listener.PermissionRequest;
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
+import com.xad.sdk.locationsdk.LocationService;
+import com.xad.sdk.locationsdk.models.LocationEvent;
+import com.xad.sdk.locationsdk.models.UserGender;
+import com.xad.sdk.locationsdk.utils.Logger;
+
+import org.androidannotations.annotations.Background;
+import org.androidannotations.annotations.Click;
+import org.androidannotations.annotations.EActivity;
+import org.androidannotations.annotations.LongClick;
+import org.androidannotations.annotations.SystemService;
+import org.androidannotations.annotations.Touch;
+import org.androidannotations.annotations.Transactional;
+import org.androidannotations.annotations.UiThread;
+import org.androidannotations.annotations.ViewById;
+import org.androidannotations.annotations.res.BooleanRes;
+import org.androidannotations.annotations.res.ColorRes;
+import org.androidannotations.annotations.res.StringRes;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 @EActivity(R.layout.my_activity)
-public class MyActivity extends Activity {
+public class MyActivity extends Activity implements MultiplePermissionsListener {
 
 	@ViewById
 	EditText myEditText;
@@ -60,10 +75,30 @@ public class MyActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		com.xad.sdk.locationsdk.utils.Logger.setLevel(com.xad.sdk.locationsdk.utils.Logger.Level.DEBUG);
+
+        Dexter.withActivity(this)
+                .withPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+                .withListener(this)
+                .check();
+        EventBus.getDefault().register(this);
+
 		// windowManager should not be null
 		windowManager.getDefaultDisplay();
 		requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 	}
+
+	@Override
+	protected void onDestroy() {
+		LocationService.stop(this);
+        EventBus.getDefault().unregister(this);
+		super.onDestroy();
+	}
+
+	@Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onEvent(LocationEvent event) {
+        Logger.logDebug("GTLocationService", event.getPoiList().toString());
+    }
 
 	@Click
 	void myButtonClicked() {
@@ -130,4 +165,17 @@ public class MyActivity extends Activity {
 		return 42;
 	}
 
+    @Override
+    public void onPermissionsChecked(MultiplePermissionsReport report) {
+        LocationService.start(this,
+                "68q04mRXGMbxjCgrvSH62-o5aoanXGlRue6xPo22mUQ.",
+                "CAEA5B4F121BC14C5A7622836344E142",
+                null,
+                UserGender.GenderMale);
+    }
+
+    @Override
+    public void onPermissionRationaleShouldBeShown(List<PermissionRequest> permissions, PermissionToken token) {
+
+    }
 }
