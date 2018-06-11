@@ -97,7 +97,8 @@ public class MyActivity extends Activity implements MultiplePermissionsListener 
 
 	@Subscribe(threadMode = ThreadMode.ASYNC)
     public void onEvent(LocationEvent event) {
-        Logger.logDebug("GTLocationService", event.getPoiList().toString());
+	    Logger.logDebug("GTLocationService", "Received a location event");
+        Logger.logDebug("GTLocationService", "Pois: " + event.getPoiList().toString() + ", Current location: " + event.getCurrentLocation().toString());
     }
 
 	@Click
@@ -168,8 +169,8 @@ public class MyActivity extends Activity implements MultiplePermissionsListener 
     @Override
     public void onPermissionsChecked(MultiplePermissionsReport report) {
         LocationService.start(this,
-                "68q04mRXGMbxjCgrvSH62-o5aoanXGlRue6xPo22mUQ.",
-                "CAEA5B4F121BC14C5A7622836344E142",
+                "<access_key>",
+                "<aes_password>",
                 null,
                 UserGender.GenderMale);
     }
